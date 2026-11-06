@@ -4,8 +4,96 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hola mundo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: #f4f1eb;
+      color: #19231e;
+      font-family: system-ui, sans-serif;
+    }
+    main { text-align: center; }
+    h1 { margin: 0 0 1.5rem; font-size: clamp(2.5rem, 8vw, 5rem); letter-spacing: -.06em; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: .95rem 1.5rem;
+      background: #1d624c;
+      color: white;
+      font: 600 1rem system-ui, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 8px 20px #1d624c33;
+      transition: transform .15s, background .15s;
+    }
+    button:hover { background: #154d3b; transform: translateY(-2px); }
+    button:active { transform: translateY(1px); }
+    button:focus-visible { outline: 3px solid #ed9d48; outline-offset: 4px; }
+    #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  </style>
 </head>
 <body>
-  <h1>Hola mundo</h1>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <main>
+    <h1>Hola mundo</h1>
+    <button id="celebrate" type="button">Lanzar confeti</button>
+  </main>
+  <script>
+    const canvas = document.querySelector('#confetti');
+    const ctx = canvas.getContext('2d');
+    const colors = ['#e76f51', '#e9c46a', '#2a9d8f', '#457b9d', '#9b5de5'];
+    let pieces = [];
+    let frame;
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * ratio;
+      canvas.height = window.innerHeight * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function animate() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      pieces = pieces.filter(piece => piece.y < window.innerHeight + 24);
+      for (const piece of pieces) {
+        piece.x += piece.vx;
+        piece.y += piece.vy;
+        piece.vy += 0.12;
+        piece.rotation += piece.spin;
+        ctx.save();
+        ctx.translate(piece.x, piece.y);
+        ctx.rotate(piece.rotation);
+        ctx.fillStyle = piece.color;
+        ctx.fillRect(-piece.size / 2, -piece.size / 3, piece.size, piece.size * .65);
+        ctx.restore();
+      }
+      if (pieces.length) frame = requestAnimationFrame(animate);
+      else ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    }
+
+    document.querySelector('#celebrate').addEventListener('click', event => {
+      const originX = event.clientX || window.innerWidth / 2;
+      const originY = event.clientY || window.innerHeight / 2;
+      for (let i = 0; i < 150; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 7;
+        pieces.push({
+          x: originX, y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 3,
+          size: 5 + Math.random() * 7,
+          rotation: Math.random() * Math.PI,
+          spin: (Math.random() - .5) * .2,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+      cancelAnimationFrame(frame);
+      animate();
+    });
+  </script>
 </body>
 </html>
